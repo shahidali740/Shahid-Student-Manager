@@ -1,543 +1,302 @@
 
-import os
 import json
+import os
 from datetime import date
 
 from kivy.app import App
-from kivy.lang import Builder
-from kivy.uix.screenmanager import Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.uix.popup import Popup
+from kivy.core.window import Window
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FILE = os.path.join(BASE_DIR, "students.json")
-LOGO = os.path.join(BASE_DIR, "logo png.png")
+DATA_FILE = "students.json"
 
-def load_data():
-    if os.path.exists(FILE):
-        try:
-            with open(FILE, "r") as f:
-                data = json.load(f)
-                for s in data:
-                    s.setdefault("class", "")
-                    s.setdefault("section", "")
-                    s.setdefault("fee", 0)
-                    s.setdefault("fee_status", "Unpaid")
-                    s.setdefault("photo", "")
-                    s.setdefault("attendance", {})
-                return data
-        except:
-            return []
-    return []
 
-students = load_data()
+class StudentManager(App):
 
-def save_data():
-    with open(FILE, "w") as f:
-        json.dump(students, f, indent=4)
-
-KV = """
-ScreenManager:
-    HomeScreen:
-    AddScreen:
-    ViewScreen:
-    SearchScreen:
-    DeleteScreen:
-    FeeScreen:
-    AttendanceScreen:
-
-<HomeScreen>:
-    name: "home"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 15
-        spacing: 8
-
-        canvas.before:
-            Color:
-                rgba: 0.94, 0.97, 1, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
-        Image:
-            id: logo
-            size_hint_y: None
-            height: 125
-            allow_stretch: True
-            keep_ratio: True
-
-        Label:
-            text: "SHAHID STUDENT MANAGER"
-            font_size: 21
-            bold: True
-            color: 0.05, 0.20, 0.45, 1
-            size_hint_y: None
-            height: 40
-
-        Button:
-            text: "ADD STUDENT"
-            on_press: root.manager.current = "add"
-
-        Button:
-            text: "VIEW STUDENTS"
-            on_press:
-                root.manager.get_screen("view").refresh()
-                root.manager.current = "view"
-
-        Button:
-            text: "SEARCH STUDENT"
-            on_press: root.manager.current = "search"
-
-        Button:
-            text: "FEE MANAGEMENT"
-            on_press: root.manager.current = "fee"
-
-        Button:
-            text: "ATTENDANCE"
-            on_press: root.manager.current = "attendance"
-
-        Button:
-            text: "DELETE STUDENT"
-            background_color: 0.8, 0.2, 0.2, 1
-            on_press: root.manager.current = "delete"
-
-<AddScreen>:
-    name: "add"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 15
-        spacing: 8
-
-        Label:
-            text: "ADD NEW STUDENT"
-            font_size: 22
-            bold: True
-            size_hint_y: None
-            height: 45
-
-        TextInput:
-            id: student_name
-            hint_text: "Student Name"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        TextInput:
-            id: father_name
-            hint_text: "Father Name"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        TextInput:
-            id: roll_no
-            hint_text: "Roll Number"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        TextInput:
-            id: student_class
-            hint_text: "Class (e.g. 5)"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        TextInput:
-            id: section
-            hint_text: "Section (e.g. A)"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        TextInput:
-            id: fee
-            hint_text: "Monthly Fee"
-            input_filter: "int"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        TextInput:
-            id: photo
-            hint_text: "Photo file name (optional)"
-            multiline: False
-            size_hint_y: None
-            height: 48
-
-        Label:
-            text: "Put student photo in this same folder"
-            font_size: 12
-            size_hint_y: None
-            height: 25
-
-        Button:
-            text: "SAVE STUDENT"
-            size_hint_y: None
-            height: 50
-            on_press: root.add_student()
-
-        Label:
-            id: message
-            text: ""
-            size_hint_y: None
-            height: 35
-
-        Button:
-            text: "BACK HOME"
-            size_hint_y: None
-            height: 45
-            on_press: root.manager.current = "home"
-
-<ViewScreen>:
-    name: "view"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 15
-        spacing: 10
-
-        Label:
-            text: "STUDENT RECORDS"
-            font_size: 22
-            bold: True
-            size_hint_y: None
-            height: 45
-
-        ScrollView:
-            Label:
-                id: records
-                text: ""
-                size_hint_y: None
-                height: self.texture_size[1] + 30
-                text_size: self.width, None
-                halign: "left"
-                valign: "top"
-
-        Button:
-            text: "REFRESH"
-            size_hint_y: None
-            height: 48
-            on_press: root.refresh()
-
-        Button:
-            text: "BACK HOME"
-            size_hint_y: None
-            height: 48
-            on_press: root.manager.current = "home"
-
-<SearchScreen>:
-    name: "search"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 20
-        spacing: 12
-
-        Label:
-            text: "SEARCH STUDENT"
-            font_size: 22
-            bold: True
-
-        TextInput:
-            id: search_roll
-            hint_text: "Enter Roll Number"
-            multiline: False
-            size_hint_y: None
-            height: 50
-
-        Button:
-            text: "SEARCH"
-            size_hint_y: None
-            height: 50
-            on_press: root.search_student()
-
-        Label:
-            id: result
-            text: ""
-            halign: "left"
-            valign: "middle"
-
-        Button:
-            text: "BACK HOME"
-            size_hint_y: None
-            height: 48
-            on_press: root.manager.current = "home"
-
-<FeeScreen>:
-    name: "fee"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 20
-        spacing: 12
-
-        Label:
-            text: "FEE MANAGEMENT"
-            font_size: 22
-            bold: True
-
-        TextInput:
-            id: fee_roll
-            hint_text: "Student Roll Number"
-            multiline: False
-            size_hint_y: None
-            height: 50
-
-        TextInput:
-            id: fee_amount
-            hint_text: "Fee Amount"
-            input_filter: "int"
-            multiline: False
-            size_hint_y: None
-            height: 50
-
-        Spinner:
-            id: fee_status
-            text: "Paid"
-            values: ["Paid", "Unpaid"]
-            size_hint_y: None
-            height: 50
-
-        Button:
-            text: "SAVE FEE RECORD"
-            size_hint_y: None
-            height: 55
-            on_press: root.save_fee()
-
-        Label:
-            id: fee_message
-            text: ""
-
-        Button:
-            text: "BACK HOME"
-            size_hint_y: None
-            height: 48
-            on_press: root.manager.current = "home"
-
-<AttendanceScreen>:
-    name: "attendance"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 20
-        spacing: 12
-
-        Label:
-            text: "STUDENT ATTENDANCE"
-            font_size: 22
-            bold: True
-
-        Label:
-            text: "Date: " + root.today
-            size_hint_y: None
-            height: 35
-
-        TextInput:
-            id: attendance_roll
-            hint_text: "Student Roll Number"
-            multiline: False
-            size_hint_y: None
-            height: 50
-
-        Spinner:
-            id: attendance_status
-            text: "Present"
-            values: ["Present", "Absent", "Leave"]
-            size_hint_y: None
-            height: 50
-
-        Button:
-            text: "SAVE ATTENDANCE"
-            size_hint_y: None
-            height: 55
-            on_press: root.mark_attendance()
-
-        Label:
-            id: attendance_message
-            text: ""
-
-        Button:
-            text: "BACK HOME"
-            size_hint_y: None
-            height: 48
-            on_press: root.manager.current = "home"
-
-<DeleteScreen>:
-    name: "delete"
-    BoxLayout:
-        orientation: "vertical"
-        padding: 20
-        spacing: 12
-
-        Label:
-            text: "DELETE STUDENT"
-            font_size: 22
-            bold: True
-
-        TextInput:
-            id: delete_roll
-            hint_text: "Enter Roll Number"
-            multiline: False
-            size_hint_y: None
-            height: 50
-
-        Button:
-            text: "DELETE RECORD"
-            size_hint_y: None
-            height: 55
-            background_color: 0.8, 0.2, 0.2, 1
-            on_press: root.delete_student()
-
-        Label:
-            id: delete_message
-            text: ""
-
-        Button:
-            text: "BACK HOME"
-            size_hint_y: None
-            height: 48
-            on_press: root.manager.current = "home"
-"""
-
-class HomeScreen(Screen):
-    pass
-
-class AddScreen(Screen):
-    def add_student(self):
-        name = self.ids.student_name.text.strip()
-        father = self.ids.father_name.text.strip()
-        roll = self.ids.roll_no.text.strip()
-
-        if not name or not father or not roll:
-            self.ids.message.text = "Fill name, father name and roll!"
-            return
-
-        if any(s["roll"] == roll for s in students):
-            self.ids.message.text = "Roll number already exists!"
-            return
-
-        students.append({
-            "name": name,
-            "father": father,
-            "roll": roll,
-            "class": self.ids.student_class.text.strip(),
-            "section": self.ids.section.text.strip(),
-            "fee": int(self.ids.fee.text or 0),
-            "fee_status": "Unpaid",
-            "photo": self.ids.photo.text.strip(),
-            "attendance": {}
-        })
-
-        save_data()
-        self.ids.message.text = "Student Saved Successfully!"
-
-        for field in ("student_name", "father_name", "roll_no",
-                      "student_class", "section", "fee", "photo"):
-            self.ids[field].text = ""
-
-class ViewScreen(Screen):
-    def refresh(self):
-        if not students:
-            self.ids.records.text = "No students found."
-            return
-
-        lines = []
-        for s in students:
-            lines.append(
-                "Name: " + s["name"] +
-                "\nFather: " + s["father"] +
-                "\nRoll: " + s["roll"] +
-                "\nClass: " + s.get("class", "") +
-                "\nSection: " + s.get("section", "") +
-                "\nMonthly Fee: " + str(s.get("fee", 0)) +
-                "\nFee Status: " + s.get("fee_status", "Unpaid") +
-                "\nPhoto: " + s.get("photo", "") +
-                "\n------------------------"
-            )
-        self.ids.records.text = "\n\n".join(lines)
-
-class SearchScreen(Screen):
-    def search_student(self):
-        roll = self.ids.search_roll.text.strip()
-        found = next((s for s in students if s["roll"] == roll), None)
-
-        if found:
-            self.ids.result.text = (
-                "Name: " + found["name"] +
-                "\nFather: " + found["father"] +
-                "\nRoll: " + found["roll"] +
-                "\nClass: " + found.get("class", "") +
-                "\nSection: " + found.get("section", "") +
-                "\nFee: " + str(found.get("fee", 0)) +
-                "\nFee Status: " + found.get("fee_status", "Unpaid")
-            )
-        else:
-            self.ids.result.text = "Student not found!"
-
-class FeeScreen(Screen):
-    def save_fee(self):
-        roll = self.ids.fee_roll.text.strip()
-        amount = self.ids.fee_amount.text.strip()
-        status = self.ids.fee_status.text
-
-        found = next((s for s in students if s["roll"] == roll), None)
-
-        if not found:
-            self.ids.fee_message.text = "Student not found!"
-            return
-
-        if not amount:
-            self.ids.fee_message.text = "Enter fee amount!"
-            return
-
-        found["fee"] = int(amount)
-        found["fee_status"] = status
-        save_data()
-        self.ids.fee_message.text = "Fee record saved!"
-
-class AttendanceScreen(Screen):
-    @property
-    def today(self):
-        return date.today().isoformat()
-
-    def mark_attendance(self):
-        roll = self.ids.attendance_roll.text.strip()
-        status = self.ids.attendance_status.text
-
-        found = next((s for s in students if s["roll"] == roll), None)
-
-        if not found:
-            self.ids.attendance_message.text = "Student not found!"
-            return
-
-        found.setdefault("attendance", {})
-        found["attendance"][self.today] = status
-        save_data()
-        self.ids.attendance_message.text = "Attendance saved!"
-
-class DeleteScreen(Screen):
-    def delete_student(self):
-        roll = self.ids.delete_roll.text.strip()
-        found = next((s for s in students if s["roll"] == roll), None)
-
-        if found:
-            students.remove(found)
-            save_data()
-            self.ids.delete_message.text = "Student Deleted!"
-        else:
-            self.ids.delete_message.text = "Student Not Found!"
-
-class StudentApp(App):
     def build(self):
         self.title = "Shahid Student Manager"
-        self.icon = LOGO
+        Window.clearcolor = (0.92, 0.95, 1, 1)
 
-        root = Builder.load_string(KV)
-        logo_widget = root.get_screen("home").ids.logo
+        self.students = self.load_data()
 
-        if os.path.exists(LOGO):
-            logo_widget.source = LOGO
-            logo_widget.reload()
-        else:
-            print("Logo not found:", LOGO)
+        root = BoxLayout(
+            orientation="vertical",
+            padding=12,
+            spacing=8
+        )
+
+        heading = Label(
+            text="[b]SHAHID STUDENT MANAGER[/b]",
+            markup=True,
+            font_size=22,
+            color=(0.05, 0.2, 0.4, 1),
+            size_hint_y=None,
+            height=55
+        )
+        root.add_widget(heading)
+
+        self.name = self.make_input("Student Name")
+        self.father = self.make_input("Father Name")
+        self.class_name = self.make_input("Class")
+        self.section = self.make_input("Section")
+        self.phone = self.make_input("Mobile Number")
+        self.fee = self.make_input("Fee Amount")
+        self.photo = self.make_input("Photo File Path (optional)")
+
+        for field in [
+            self.name, self.father, self.class_name,
+            self.section, self.phone, self.fee, self.photo
+        ]:
+            root.add_widget(field)
+
+        self.fee_status = TextInput(
+            hint_text="Fee Status: Paid or Unpaid",
+            multiline=False,
+            size_hint_y=None,
+            height=42
+        )
+        root.add_widget(self.fee_status)
+
+        self.attendance = TextInput(
+            hint_text="Attendance: Present / Absent / Leave",
+            multiline=False,
+            size_hint_y=None,
+            height=42
+        )
+        root.add_widget(self.attendance)
+
+        self.search_box = self.make_input("Search Student Name")
+        root.add_widget(self.search_box)
+
+        buttons = [
+            ("Add Student", self.add_student),
+            ("View Students", self.view_students),
+            ("Search Student", self.search_student),
+            ("Mark Attendance", self.mark_attendance),
+            ("Delete Student", self.delete_student),
+            ("Clear Fields", self.clear_fields)
+        ]
+
+        for title, action in buttons:
+            btn = Button(
+                text=title,
+                size_hint_y=None,
+                height=45,
+                background_color=(0.08, 0.3, 0.58, 1)
+            )
+            btn.bind(on_press=action)
+            root.add_widget(btn)
 
         return root
 
+    def make_input(self, hint):
+        return TextInput(
+            hint_text=hint,
+            multiline=False,
+            size_hint_y=None,
+            height=42
+        )
+
+    def load_data(self):
+        if os.path.exists(DATA_FILE):
+            try:
+                with open(DATA_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data if isinstance(data, list) else []
+            except Exception:
+                return []
+        return []
+
+    def save_data(self):
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(
+                self.students,
+                f,
+                ensure_ascii=False,
+                indent=4
+            )
+
+    def message(self, title, text):
+        content = BoxLayout(
+            orientation="vertical",
+            padding=10,
+            spacing=10
+        )
+        content.add_widget(Label(text=text))
+
+        close = Button(
+            text="OK",
+            size_hint_y=None,
+            height=45
+        )
+        content.add_widget(close)
+
+        popup = Popup(
+            title=title,
+            content=content,
+            size_hint=(0.85, 0.4)
+        )
+        close.bind(on_press=popup.dismiss)
+        popup.open()
+
+    def add_student(self, instance):
+        if not self.name.text.strip():
+            self.message("Error", "Student name is required.")
+            return
+
+        student = {
+            "id": len(self.students) + 1,
+            "name": self.name.text.strip(),
+            "father": self.father.text.strip(),
+            "class": self.class_name.text.strip(),
+            "section": self.section.text.strip(),
+            "phone": self.phone.text.strip(),
+            "fee": self.fee.text.strip(),
+            "fee_status": self.fee_status.text.strip(),
+            "photo": self.photo.text.strip(),
+            "attendance": {}
+        }
+
+        self.students.append(student)
+        self.save_data()
+        self.clear_fields(None)
+
+        self.message("Success", "Student added successfully!")
+
+    def view_students(self, instance):
+        if not self.students:
+            self.message("Students", "No students found.")
+            return
+
+        lines = []
+
+        for s in self.students:
+            lines.append(
+                f"Name: {s.get('name', '')}\n"
+                f"Father: {s.get('father', '')}\n"
+                f"Class: {s.get('class', '')} "
+                f"{s.get('section', '')}\n"
+                f"Phone: {s.get('phone', '')}\n"
+                f"Fee: {s.get('fee', '')} "
+                f"({s.get('fee_status', '')})\n"
+                "----------------------"
+            )
+
+        self.show_long_text("All Students", "\n".join(lines))
+
+    def search_student(self, instance):
+        query = self.search_box.text.strip().lower()
+
+        if not query:
+            self.message("Search", "Enter a student name.")
+            return
+
+        matches = [
+            s for s in self.students
+            if query in s.get("name", "").lower()
+        ]
+
+        if not matches:
+            self.message("Search", "Student not found.")
+            return
+
+        result = []
+        for s in matches:
+            result.append(
+                f"Name: {s.get('name', '')}\n"
+                f"Class: {s.get('class', '')}\n"
+                f"Phone: {s.get('phone', '')}\n"
+                f"Fee: {s.get('fee_status', '')}"
+            )
+
+        self.show_long_text("Search Results", "\n\n".join(result))
+
+    def mark_attendance(self, instance):
+        query = self.name.text.strip().lower()
+        status = self.attendance.text.strip().title()
+
+        if not query:
+            self.message("Attendance", "Enter student name in Student Name.")
+            return
+
+        if status not in ["Present", "Absent", "Leave"]:
+            self.message(
+                "Attendance",
+                "Enter Present, Absent or Leave."
+            )
+            return
+
+        for s in self.students:
+            if s.get("name", "").lower() == query:
+                s.setdefault("attendance", {})
+                s["attendance"][str(date.today())] = status
+                self.save_data()
+                self.message("Success", "Attendance saved.")
+                return
+
+        self.message("Attendance", "Student not found.")
+
+    def delete_student(self, instance):
+        query = self.search_box.text.strip().lower()
+
+        if not query:
+            self.message("Delete", "Enter name in Search Student Name.")
+            return
+
+        old_count = len(self.students)
+
+        self.students = [
+            s for s in self.students
+            if s.get("name", "").lower() != query
+        ]
+
+        if len(self.students) == old_count:
+            self.message("Delete", "Student not found.")
+        else:
+            self.save_data()
+            self.message("Success", "Student deleted.")
+
+    def clear_fields(self, instance):
+        for field in [
+            self.name, self.father, self.class_name,
+            self.section, self.phone, self.fee,
+            self.photo, self.fee_status,
+            self.attendance, self.search_box
+        ]:
+            field.text = ""
+
+    def show_long_text(self, title, text):
+        layout = BoxLayout(
+            orientation="vertical",
+            padding=10,
+            spacing=10
+        )
+
+        display = TextInput(
+            text=text,
+            readonly=True,
+            size_hint_y=1
+        )
+        layout.add_widget(display)
+
+        close = Button(
+            text="Close",
+            size_hint_y=None,
+            height=45
+        )
+        layout.add_widget(close)
+
+        popup = Popup(
+            title=title,
+            content=layout,
+            size_hint=(0.92, 0.85)
+        )
+        close.bind(on_press=popup.dismiss)
+        popup.open()
+
+
 if __name__ == "__main__":
-    StudentApp().run()
+    StudentManager().run()
