@@ -1,0 +1,43 @@
+
+name: Build Shahid Student Manager APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip build-essential \
+            python3-pip python3-setuptools \
+            libffi-dev libssl-dev libsqlite3-dev \
+            zlib1g-dev autoconf automake libtool \
+            pkg-config cmake
+
+      - name: Install Buildozer
+        run: |
+          pip3 install --user --upgrade buildozer cython
+
+      - name: Build APK
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shahid-Student-Manager-APK
+          path: bin/*.apk
