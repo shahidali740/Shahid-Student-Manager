@@ -38,7 +38,7 @@ class StudentManager(App):
         )
         root.add_widget(heading)
 
-        self.name = self.make_input("Student Name")
+        self.student_name = self.make_input("Student Name")
         self.father = self.make_input("Father Name")
         self.class_name = self.make_input("Class")
         self.section = self.make_input("Section")
