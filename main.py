@@ -47,7 +47,7 @@ class StudentManager(App):
         self.photo = self.make_input("Photo File Path (optional)")
 
         for field in [
-            self.name, self.father, self.class_name,
+            self.student_name, self.father, self.class_name,
             self.section, self.phone, self.fee, self.photo
         ]:
             root.add_widget(field)
@@ -143,13 +143,13 @@ class StudentManager(App):
         popup.open()
 
     def add_student(self, instance):
-        if not self.name.text.strip():
+        if not self.student_name.text.strip():
             self.message("Error", "Student name is required.")
             return
 
         student = {
             "id": len(self.students) + 1,
-            "name": self.name.text.strip(),
+            "name": self.student_name.text.strip(),
             "father": self.father.text.strip(),
             "class": self.class_name.text.strip(),
             "section": self.section.text.strip(),
@@ -215,7 +215,7 @@ class StudentManager(App):
         self.show_long_text("Search Results", "\n\n".join(result))
 
     def mark_attendance(self, instance):
-        query = self.name.text.strip().lower()
+        query = self.student_name.text.strip().lower()
         status = self.attendance.text.strip().title()
 
         if not query:
@@ -261,7 +261,7 @@ class StudentManager(App):
 
     def clear_fields(self, instance):
         for field in [
-            self.name, self.father, self.class_name,
+            self.student_name, self.father, self.class_name,
             self.section, self.phone, self.fee,
             self.photo, self.fee_status,
             self.attendance, self.search_box
