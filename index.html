@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shahid Student Manager Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172554}
+header{background:#123b70;color:white;padding:20px;text-align:center}
+.container{max-width:950px;margin:20px auto;padding:15px}
+.card{background:white;padding:20px;margin-bottom:18px;border-radius:12px;box-shadow:0 3px 12px #0001}
+input,button{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
+button{background:#1456a0;color:white;border:0;cursor:pointer}
+button:hover{background:#0b376d}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+.status{padding:10px;background:#e0f2fe;border-radius:7px;margin:10px 0}
+</style>
+</head>
+<body>
+
+<header>
+<h2>SHAHID STUDENT MANAGER PRO</h2>
+<p>School Management System</p>
+</header>
+
+<div class="container">
+
+<div class="card" id="authBox">
+<h3>Login / Create Account</h3>
+<input id="email" type="email" placeholder="Email Address">
+<input id="password" type="password" placeholder="Password">
+<button onclick="signUp()">Create Account</button>
+<button onclick="signIn()">Login</button>
+<p id="authMessage"></p>
+</div>
+
+<div class="card hidden" id="schoolBox">
+<h3>Create Your School</h3>
+<input id="schoolName" placeholder="School Name">
+<button onclick="createSchool()">Save School</button>
+</div>
+
+<div class="card hidden" id="dashboard">
+<h3 id="welcome">School Dashboard</h3>
+<div class="status" id="schoolStatus"></div>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="card hidden" id="studentBox">
+<h3>Add New Student</h3>
+<input id="studentName" placeholder="Student Name">
+<input id="fatherName" placeholder="Father Name">
+<input id="className" placeholder="Class">
+<input id="section" placeholder="Section">
+<input id="phone" placeholder="Mobile Number">
+<input id="fee" type="number" placeholder="Monthly Fee">
+<button onclick="addStudent()">Save Student</button>
+</div>
+
+<div class="card hidden" id="studentList">
+<h3>Students Record</h3>
+<button onclick="loadStudents()">Refresh Students</button>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Name</th><th>Father</th><th>Class</th><th>Phone</th><th>Fee</th></tr></thead>
+<tbody id="studentsTable"></tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+<script>
+// اپنی Supabase معلومات یہاں درج کریں
+const SUPABASE_URL = "https://ckngyznpxlxlmuqrvwro.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_51lAjrwHpbusU0WClrhMJg_6TlXMNCl";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let currentSchool = null;
+
+function message(id,text){
+ document.getElementById(id).innerText=text;
+}
+
+async function signUp(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email || !password){message("authMessage","Email and password required.");return;}
+ const {error}=await db.auth.signUp({email,password});
+ message("authMessage",error ? error.message : "Account created. Check your email if confirmation is required.");
+}
+
+async function signIn(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){message("authMessage",error.message);return;}
+ currentUser=data.user;
+ await startApp();
+}
+
+async function startApp(){
+ document.getElementById("authBox").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+
+ const {data,error}=await db.from("schools")
+ .select("*").eq("owner_id",currentUser.id).limit(1);
+
+ if(error){alert(error.message);return;}
+
+ if(data.length){
+   currentSchool=data[0];
+   document.getElementById("welcome").innerText=currentSchool.school_name;
+   document.getElementById("schoolStatus").innerText="Your school account is active.";
+   document.getElementById("studentBox").classList.remove("hidden");
+   document.getElementById("studentList").classList.remove("hidden");
+   await loadStudents();
+ }else{
+   document.getElementById("schoolBox").classList.remove("hidden");
+ }
+}
+
+async function createSchool(){
+ const name=document.getElementById("schoolName").value.trim();
+ if(!name){alert("Enter school name.");return;}
+
+ const {data,error}=await db.from("schools").insert({
+   school_name:name,
+   owner_id:currentUser.id
+ }).select().single();
+
+ if(error){alert(error.message);return;}
+ currentSchool=data;
+ document.getElementById("schoolBox").classList.add("hidden");
+ document.getElementById("welcome").innerText=name;
+ document.getElementById("schoolStatus").innerText="Your school account is active.";
+ document.getElementById("studentBox").classList.remove("hidden");
+ document.getElementById("studentList").classList.remove("hidden");
+}
+
+async function addStudent(){
+ if(!currentSchool){alert("School account not found.");return;}
+
+ const name=document.getElementById("studentName").value.trim();
+ if(!name){alert("Student name is required.");return;}
+
+ const student={
+   school_id:currentSchool.id,
+   student_name:name,
+   father_name:document.getElementById("fatherName").value.trim(),
+   class_name:document.getElementById("className").value.trim(),
+   section:document.getElementById("section").value.trim(),
+   phone:document.getElementById("phone").value.trim(),
+   monthly_fee:Number(document.getElementById("fee").value)||0
+ };
+
+ const {error}=await db.from("students").insert(student);
+ if(error){alert(error.message);return;}
+
+ alert("Student saved successfully.");
+ document.querySelectorAll("#studentBox input").forEach(x=>x.value="");
+ await loadStudents();
+}
+
+async function loadStudents(){
+ const {data,error}=await db.from("students")
+ .select("*").eq("school_id",currentSchool.id)
+ .order("created_at",{ascending:false});
+
+ if(error){alert(error.message);return;}
+
+ const table=document.getElementById("studentsTable");
+ table.innerHTML="";
+ data.forEach(s=>{
+   const tr=document.createElement("tr");
+   [s.student_name,s.father_name,s.class_name,s.phone,s.monthly_fee]
+   .forEach(value=>{
+     const td=document.createElement("td");
+     td.textContent=value ?? "";
+     tr.appendChild(td);
+   });
+   table.appendChild(tr);
+ });
+}
+
+async function logout(){
+ await db.auth.signOut();
+ location.reload();
+}
+
+db.auth.getSession().then(async ({data})=>{
+ if(data.session){
+   currentUser=data.session.user;
+   await startApp();
+ }
+});
+</script>
+</body>
+</html>
